@@ -23,4 +23,5 @@ jobs:
             docker run -d -v /var/lib/prometheus:/prometheus -p 9090:9090 --name prometheus prom/prometheus
             docker run -d -v /var/lib/grafana:/var/lib/grafana -p 3000:3000 --name grafana grafana/grafana
             docker run -d -v /var/lib/alertmanager:/alertmanager -p 9093:9093 --name alertmanager prom/alertmanager
+            
             # WireGuard
