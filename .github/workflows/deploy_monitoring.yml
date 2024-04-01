@@ -1,7 +1,7 @@
 name: Deploy Monitoring Stack
 
 on:
-  workflow_call:
+  workflow_dispatch:
 
 jobs:
   deploy:
