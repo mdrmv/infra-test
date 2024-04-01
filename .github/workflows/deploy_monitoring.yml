@@ -13,9 +13,10 @@ jobs:
       - name: Stop and remove old containers
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST_IP }}
-          username: ${{ secrets.HOST_USER }}
-          key: ${{ secrets.HOST_SSH_KEY }}
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
           script: |
             docker stop prometheus grafana alertmanager || true
             docker rm prometheus grafana alertmanager || true
