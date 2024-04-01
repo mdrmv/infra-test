@@ -10,7 +10,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: SSH and Deploy
+      - name: Stop and remove old containers
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST_IP }}
+          username: ${{ secrets.HOST_USER }}
+          key: ${{ secrets.HOST_SSH_KEY }}
+          script: |
+            docker stop prometheus grafana alertmanager || true
+            docker rm prometheus grafana alertmanager || true
+
+      - name: Deploy new containers
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
