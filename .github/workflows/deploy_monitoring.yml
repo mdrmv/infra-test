@@ -15,7 +15,7 @@ jobs:
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
-          SECRET_PASSWORD: ${{ secrets.VPS_PASSWORD }}
+          password: ${{ secrets.VPS_PASSWORD }}
           script: |
             docker pull prom/prometheus
             docker pull grafana/grafana
