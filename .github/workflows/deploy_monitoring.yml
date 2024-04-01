@@ -1,0 +1,26 @@
+name: Deploy Monitoring Stack
+
+on:
+  workflow_call:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: SSH and Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            docker pull prom/prometheus
+            docker pull grafana/grafana
+            docker pull prom/alertmanager
+            docker run -d -v /var/lib/prometheus:/prometheus -p 9090:9090 --name prometheus prom/prometheus
+            docker run -d -v /var/lib/grafana:/var/lib/grafana -p 3000:3000 --name grafana grafana/grafana
+            docker run -d -v /var/lib/alertmanager:/alertmanager -p 9093:9093 --name alertmanager prom/alertmanager
+            # WireGuard
