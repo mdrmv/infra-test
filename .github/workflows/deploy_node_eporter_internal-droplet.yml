@@ -1,0 +1,33 @@
+name: Deploy Node Exporter
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'main'
+
+jobs:
+  deploy-node-exporter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Deploy node_exporter
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_INTERNAL }}
+          username: ${{ secrets.VPS_USERNAME_INTERNAL }}
+          password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
+          script: |
+            docker stop node_exporter || true
+            docker rm node_exporter || true
+            docker pull prom/node-exporter
+            docker run -d --net="host" --pid="host" \
+              -v "/:/host:ro,rslave" \
+              --name node_exporter \
+              prom/node-exporter --path.rootfs=/host
