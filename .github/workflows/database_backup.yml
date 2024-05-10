@@ -17,21 +17,21 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
-            # Setting up date and file path
-            BACKUP_DATE=$(date +%Y-%m-%d)
-            BACKUP_FILE="/mnt/io-db-backups/internal-db/backup_${BACKUP_DATE}_internal.sql"
-
-            # Starting the backup process
-            echo "Starting backup for ${BACKUP_DATE}"
-            PGPASSWORD="${{ secrets.DB_PASSWORD_INTERNAL }}" pg_dump -F c -U ${{ secrets.DB_USER_INTERNAL }} -h ${{ secrets.DB_HOST_INTERNAL }} -p ${{ secrets.DB_PORT_INTERNAL }} ${{ secrets.DB_NAME_INTERNAL }} -f "${BACKUP_FILE}"
-
-            # Checking if the backup was successful
-            if [ $? -eq 0 ]; then
-              echo "Backup successful: ${BACKUP_FILE}"
-            else
-              echo "Backup failed for ${BACKUP_DATE}"
-              exit 1
-            fi
+            DATABASES=("defaultdb" "admin-ms" "client-ms" "notification-ms" "user-ms")
+            BACKUP_PATH="/mnt/io-db-backups/internal-db/"
+            
+            for DB in "${DATABASES[@]}"
+            do
+              echo "Starting backup for $DB"
+              PGPASSWORD="${{ secrets.DB_PASSWORD_INTERNAL }}" pg_dump -U ${{ secrets.DB_USER_INTERNAL }} -h ${{ secrets.DB_HOST_INTERNAL }} -p ${{ secrets.DB_PORT_INTERNAL }} $DB > "${BACKUP_PATH}/${DB}_backup_$(date +%Y-%m-%d).sql"
+              
+              if [ $? -eq 0 ]; then
+                echo "Backup successful for $DB"
+              else
+                echo "Backup failed for $DB"
+                exit 1
+              fi
+            done
 
       - name: Cleanup old backups in internal DB folder
         uses: appleboy/ssh-action@master
@@ -54,13 +54,27 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
-            PGPASSWORD="${{ secrets.DB_PASSWORD_STAGE }}" pg_dump -U ${{ secrets.DB_USER_STAGE }} -h ${{ secrets.DB_HOST_STAGE }} -p ${{ secrets.DB_PORT_STAGE }} ${{ secrets.DB_NAME_STAGE }} > "/mnt/io-db-backups/stage-db/backup_$(date +%Y-%m-%d)_stage.sql"
+            DATABASES=("defaultdb" "admin-ms" "client-ms" "notification-ms" "user-ms")
+            BACKUP_PATH="/mnt/io-db-backups/stage-db/"
+            
+            for DB in "${DATABASES[@]}"
+            do
+              echo "Starting backup for $DB"
+              PGPASSWORD="${{ secrets.DB_PASSWORD_STAGE }}" pg_dump -U ${{ secrets.DB_USER_STAGE }} -h ${{ secrets.DB_HOST_STAGE }} -p ${{ secrets.DB_PORT_STAGE }} $DB > "${BACKUP_PATH}/${DB}_backup_$(date +%Y-%m-%d).sql"
+              
+              if [ $? -eq 0 ]; then
+                echo "Backup successful for $DB"
+              else
+                echo "Backup failed for $DB"
+                exit 1
+              fi
+            done
 
       - name: Cleanup old backups in stage DB folder
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
-          port: ${{ secrets.SSH_PORT }}ß
+          port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
