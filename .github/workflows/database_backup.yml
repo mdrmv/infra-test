@@ -1,0 +1,63 @@
+name: Database Backup and Cleanup
+
+on:
+#   schedule:
+#     - cron: '0 3 * * 0'  # Запуск каждое воскресенье в 3 утра по UTC
+    workflow_dispatch:
+
+jobs:
+  backup-internal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run backup script via SSH for internal DB
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            # Setting up date and file path
+            BACKUP_DATE=$(date +%Y-%m-%d)
+            BACKUP_FILE="/mnt/io-db-backups/internal-db/backup_${BACKUP_DATE}_internal.sql"
+
+            # Starting the backup process
+            echo "Starting backup for ${BACKUP_DATE}"
+            PGPASSWORD="${{ secrets.DB_PASSWORD_INTERNAL }}" pg_dump -F c -U ${{ secrets.DB_USER_INTERNAL }} -h ${{ secrets.DB_HOST_INTERNAL }} -p ${{ secrets.DB_PORT_INTERNAL }} ${{ secrets.DB_NAME_INTERNAL }} -f "${BACKUP_FILE}"
+
+            # Checking if the backup was successful
+            if [ $? -eq 0 ]; then
+              echo "Backup successful: ${BACKUP_FILE}"
+            else
+              echo "Backup failed for ${BACKUP_DATE}"
+              exit 1
+            fi
+
+      - name: Cleanup old backups in internal DB folder
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            find /mnt/io-db-backups/internal-db/ -type f -name '*.sql' -mtime +336 -exec rm {} \;
+
+  backup-stage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run backup script via SSH for stage DB
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            PGPASSWORD="${{ secrets.DB_PASSWORD_STAGE }}" pg_dump -U ${{ secrets.DB_USER_STAGE }} -h ${{ secrets.DB_HOST_STAGE }} -p ${{ secrets.DB_PORT_STAGE }} ${{ secrets.DB_NAME_STAGE }} > "/mnt/io-db-backups/stage-db/backup_$(date +%Y-%m-%d)_stage.sql"
+
+      - name: Cleanup old backups in stage DB folder
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            find /mnt/io-db-backups/stage-db/ -type f -name '*.sql' -mtime +336 -exec rm {} \;
