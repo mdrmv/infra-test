@@ -1,9 +1,8 @@
 name: Database Backup and Cleanup
 
 on:
-#   schedule:
-#     - cron: '0 3 * * 0'  # Запуск каждое воскресенье в 3 утра по UTC
-    workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 0'  # Launches every Sunday at 3am UTC
 
 jobs:
   backup-internal:
