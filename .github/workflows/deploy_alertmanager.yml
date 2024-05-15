@@ -1,0 +1,36 @@
+name: Deploy Alertmanager
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Stop and remove old Alertmanager container
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            docker stop alertmanager || true
+            docker rm alertmanager || true
+
+      - name: Deploy Alertmanager container
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            docker pull prom/alertmanager
+            docker run -d -v /var/lib/alertmanager:/alertmanager --name alertmanager --net ngdem -p 9093:9093 prom/alertmanager
+
+      - name: Health check Alertmanager
+        run: curl -f http://${{ secrets.VPS_HOST }}:9093/api/v1/status || exit 1
