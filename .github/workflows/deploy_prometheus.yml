@@ -1,4 +1,4 @@
-name: Deploy Monitoring Stack
+name: Deploy Prometheus
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Stop and remove old containers
+      - name: Prepare Prometheus directory and remove old container
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -18,9 +18,13 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
-            docker stop prometheus grafana alertmanager || true
-            docker rm prometheus grafana alertmanager || true
-            rm -f /var/lib/prometheus/prometheus.yml || true
+            if [ ! -d /home/${{ secrets.VPS_USERNAME }}/prometheus ]; then
+              mkdir -p /home/${{ secrets.VPS_USERNAME }}/prometheus
+            else
+              rm -rf /home/${{ secrets.VPS_USERNAME }}/prometheus/*
+            fi
+            docker stop prometheus || true
+            docker rm prometheus || true
 
       - name: Copy Prometheus configuration
         uses: appleboy/scp-action@master
@@ -29,10 +33,10 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
-          source: "./grafana/prometheus/prometheus.yml"
-          target: "/var/lib/prometheus/prometheus.yml"
+          source: "./prometheus/prometheus.yml"
+          target: "/home/${{ secrets.VPS_USERNAME }}/prometheus/prometheus.yml"
 
-      - name: Deploy new containers
+      - name: Deploy Prometheus container
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -41,8 +45,7 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
             docker pull prom/prometheus
-            docker pull grafana/grafana
-            docker pull prom/alertmanager
-            docker run -d -v /var/lib/prometheus:/prometheus -v /var/lib/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml --name prometheus --net ngdem -p 9090:9090 prom/prometheus
-            docker run -d -v /var/lib/grafana:/var/lib/grafana --name grafana --net ngdem -p 3000:3000 grafana/grafana
-            docker run -d -v /var/lib/alertmanager:/alertmanager --name alertmanager --net ngdem -p 9093:9093 prom/alertmanager
+            docker run -d -v /home/${{ secrets.VPS_USERNAME }}/prometheus:/prometheus -v /home/${{ secrets.VPS_USERNAME }}/prometheus.yml:/etc/prometheus/prometheus.yml --name prometheus --net ngdem -p 9090:9090 prom/prometheus
+
+      - name: Health check Prometheus
+        run: curl -f http://${{ secrets.VPS_HOST }}:9090/-/healthy || exit 1
