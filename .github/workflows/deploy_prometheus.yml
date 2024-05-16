@@ -47,5 +47,40 @@ jobs:
             docker pull prom/prometheus
             docker run -d -v /home/${{ secrets.VPS_USERNAME }}/prometheus:/prometheus -v /home/${{ secrets.VPS_USERNAME }}/prometheus.yml:/etc/prometheus/prometheus.yml --name prometheus --net ngdem -p 9090:9090 prom/prometheus
 
-      - name: Health check Prometheus
-        run: curl -f http://${{ secrets.VPS_HOST }}:9090/-/healthy || exit 1
+  healthcheck:
+    needs: [deploy]   
+    runs-on: ubuntu-latest   
+    outputs:   
+      id: healthcheck_output   
+    steps:   
+      - name: Run Healthcheck
+        id: healthcheck_status 
+        uses: appleboy/ssh-action@master   
+        with:   
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}   
+          script: |
+            retries=3
+            delay_seconds=20
+
+            for attempt in $(seq "$retries"); do
+            http_status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9090/-/healthy)
+              
+              if [ "$http_status" -eq 200 ]; then
+                echo "The service has been successfully raised"
+                echo "status=success" >> "$GITHUB_ENV"
+                exit 0
+              else
+                echo "Error: Service not available (attempt $attempt/$retries)"
+              fi
+
+              if [ "$attempt" -lt "$retries" ]; then
+                sleep "$delay_seconds"
+              fi
+            done
+
+            echo "Failed to start new container."
+            echo "status=failure" >> "$GITHUB_ENV"
+            exit 1
