@@ -33,4 +33,5 @@ jobs:
             docker run -d -v /var/lib/grafana:/var/lib/grafana --name grafana --net ngdem -p 3000:3000 grafana/grafana
 
       - name: Health check Grafana
-        run: curl -f http://172.0.3.15:3000/api/health || exit 1
+        run: curl -f http://172.0.3.15:3000/api/health || exit 
+
