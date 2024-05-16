@@ -18,35 +18,24 @@ jobs:
           ref: ${{ github.event.inputs.branch }}
 
       - name: Set environment variables
-        id: set-env
         run: |
-          BRANCH="${{ github.event.inputs.branch }}"
-          if [ "$BRANCH" = "main" ]; then
-            echo "VPS_HOST=${{ secrets.VPS_HOST_MONITORING }}" >> $GITHUB_ENV
-            echo "SSH_PORT=${{ secrets.SSH_PORT_MONITORING }}" >> $GITHUB_ENV
-            echo "VPS_USERNAME=${{ secrets.VPS_USERNAME_MONITORING }}" >> $GITHUB_ENV
-            echo "VPS_PASSWORD=${{ secrets.VPS_PASSWORD_MONITORING }}" >> $GITHUB_ENV
-          elif [ "$BRANCH" = "internal" ]; then
+          if [ "${{ github.event.inputs.branch }}" == "main" ]; then
+            echo "VPS_HOST=${{ secrets.VPS_HOST }}" >> $GITHUB_ENV
+            echo "SSH_PORT=${{ secrets.SSH_PORT }}" >> $GITHUB_ENV
+            echo "VPS_USERNAME=${{ secrets.VPS_USERNAME }}" >> $GITHUB_ENV
+            echo "VPS_PASSWORD=${{ secrets.VPS_PASSWORD }}" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.branch }}" == "internal" ]; then
             echo "VPS_HOST=${{ secrets.VPS_HOST_INTERNAL }}" >> $GITHUB_ENV
-            echo "SSH_PORT=${{ secrets.SSH_PORT_INTERNAL }}" >> $GITHUB_ENV
             echo "VPS_USERNAME=${{ secrets.VPS_USERNAME_INTERNAL }}" >> $GITHUB_ENV
             echo "VPS_PASSWORD=${{ secrets.VPS_PASSWORD_INTERNAL }}" >> $GITHUB_ENV
-          elif [ "$BRANCH" = "stage" ]; then
+          elif [ "${{ github.event.inputs.branch }}" == "stage" ]; then
             echo "VPS_HOST=${{ secrets.VPS_HOST_STAGE }}" >> $GITHUB_ENV
-            echo "SSH_PORT=${{ secrets.SSH_PORT_STAGE }}" >> $GITHUB_ENV
             echo "VPS_USERNAME=${{ secrets.VPS_USERNAME_STAGE }}" >> $GITHUB_ENV
             echo "VPS_PASSWORD=${{ secrets.VPS_PASSWORD_STAGE }}" >> $GITHUB_ENV
           else
-            echo "Branch not recognized, deployment skipped."
+            echo "Unknown branch: ${{ github.event.inputs.branch }}"
             exit 1
           fi
-
-      - name: Debug Environment Variables
-        run: |
-          echo "VPS_HOST=$VPS_HOST"
-          echo "SSH_PORT=$SSH_PORT"
-          echo "VPS_USERNAME=$VPS_USERNAME"
-          echo "VPS_PASSWORD=$VPS_PASSWORD"
 
       - name: Deploy node_exporter
         uses: appleboy/ssh-action@master
