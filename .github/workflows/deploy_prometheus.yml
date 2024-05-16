@@ -34,7 +34,7 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           source: "./prometheus/prometheus.yml"
-          target: "/home/${{ secrets.VPS_USERNAME }}/prometheus/"
+          target: "/"
 
       - name: Deploy Prometheus container
         uses: appleboy/ssh-action@master
