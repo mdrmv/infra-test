@@ -18,7 +18,7 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
-            rm -rf /home/${{ secrets.VPS_USERNAME }}/prometheus
+            rm -rf /home/${{ secrets.VPS_USERNAME }}/prometheus || true
             docker stop prometheus || true
             docker rm prometheus || true
             
