@@ -10,7 +10,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Stop and remove old Grafana container
+      - name: Stop and remove old Grafana container and deploy
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -20,8 +20,10 @@ jobs:
           script: |
             docker stop grafana || true
             docker rm grafana || true
+            docker pull grafana/grafana
+            docker run -d -v /var/lib/grafana:/var/lib/grafana --name grafana --net ngdem -p 3000:3000 grafana/grafana
 
-      - name: Deploy Grafana container
+      - name: Health check Grafana
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -29,9 +31,25 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
-            docker pull grafana/grafana
-            docker run -d -v /var/lib/grafana:/var/lib/grafana --name grafana --net ngdem -p 3000:3000 grafana/grafana
+            retries=3
+            delay_seconds=20
 
-      - name: Health check Grafana
-        run: curl -f http://172.0.3.15:3000/api/health || exit 
+            for attempt in $(seq "$retries"); do
+            http_status=$(curl -s -o /dev/null -w "%{http_code}" http://172.0.3.15:3000/api/health)
+              
+              if [ "$http_status" -eq 200 ]; then
+                echo "The service has been successfully raised"
+                echo "status=success" >> "$GITHUB_ENV"
+                exit 0
+              else
+                echo "Error: Service not available (attempt $attempt/$retries)"
+              fi
 
+              if [ "$attempt" -lt "$retries" ]; then
+                sleep "$delay_seconds"
+              fi
+            done
+
+            echo "Failed to start new container."
+            echo "status=failure" >> "$GITHUB_ENV"
+            exit 1
