@@ -32,6 +32,10 @@ jobs:
             docker run -d --net="host" --pid="host" \
               -v "/:/host:ro,rslave" \
               --name node_exporter \
+              --health-cmd="curl --fail http://localhost:9100/metrics || exit 1" \
+              --health-interval=30s \
+              --health-timeout=10s \
+              --health-retries=3 \
               prom/node-exporter --path.rootfs=/host
 
 
