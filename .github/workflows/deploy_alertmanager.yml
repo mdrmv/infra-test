@@ -51,7 +51,7 @@ jobs:
             delay_seconds=20
 
             for attempt in $(seq "$retries"); do
-            http_status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9093/api/v1/status)
+            http_status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9093/-/ready)
               
               if [ "$http_status" -eq 200 ]; then
                 echo "The service has been successfully raised"
