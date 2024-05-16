@@ -1,59 +1,58 @@
-name: Deploy Grafana
+name: Deploy node_exporter
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'main'
 
 jobs:
-  deploy:
+  deploy-node-exporter:
     runs-on: ubuntu-latest
     steps:
-      - name: Stop and remove old Grafana container and Deploy Grafana container
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Set environment variables
+        id: set-env
+        run: |
+          BRANCH="${{ github.event.inputs.branch }}"
+          if [ "$BRANCH" = "main" ]; then
+            echo "VPS_HOST=${{ secrets.VPS_HOST }}" >> $GITHUB_ENV
+            echo "SSH_PORT=${{ secrets.SSH_PORT }}" >> $GITHUB_ENV
+            echo "VPS_USERNAME=${{ secrets.VPS_USERNAME }}" >> $GITHUB_ENV
+            echo "VPS_PASSWORD=${{ secrets.VPS_PASSWORD }}" >> $GITHUB_ENV
+          elif [ "$BRANCH" = "internal" ]; then
+            echo "VPS_HOST=${{ secrets.VPS_HOST_INTERNAL }}" >> $GITHUB_ENV
+            echo "SSH_PORT=${{ secrets.SSH_PORT_INTERNAL }}" >> $GITHUB_ENV
+            echo "VPS_USERNAME=${{ secrets.VPS_USERNAME_INTERNAL }}" >> $GITHUB_ENV
+            echo "VPS_PASSWORD=${{ secrets.VPS_PASSWORD_INTERNAL }}" >> $GITHUB_ENV
+          elif [ "$BRANCH" = "stage" ]; then
+            echo "VPS_HOST=${{ secrets.VPS_HOST_STAGE }}" >> $GITHUB_ENV
+            echo "SSH_PORT=${{ secrets.SSH_PORT_STAGE }}" >> $GITHUB_ENV
+            echo "VPS_USERNAME=${{ secrets.VPS_USERNAME_STAGE }}" >> $GITHUB_ENV
+            echo "VPS_PASSWORD=${{ secrets.VPS_PASSWORD_STAGE }}" >> $GITHUB_ENV
+          else
+            echo "Branch not recognized, deployment skipped."
+            exit 1
+          fi
+
+      - name: Deploy node_exporter
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.VPS_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.VPS_USERNAME }}
-          password: ${{ secrets.VPS_PASSWORD }}
+          host: ${{ env.VPS_HOST }}
+          port: ${{ env.SSH_PORT }}
+          username: ${{ env.VPS_USERNAME }}
+          password: ${{ env.VPS_PASSWORD }}
           script: |
-            docker stop grafana || true
-            docker rm grafana || true
-            docker pull grafana/grafana
-            docker run -d -v /var/lib/grafana:/var/lib/grafana --name grafana --net ngdem -p 3000:3000 grafana/grafana
-
-  healthcheck:
-    needs: [deploy]   
-    runs-on: ubuntu-latest   
-    outputs:   
-      id: healthcheck_output   
-    steps:   
-      - name: Run Healthcheck
-        id: healthcheck_status 
-        uses: appleboy/ssh-action@master   
-        with:   
-          host: ${{ secrets.VPS_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.VPS_USERNAME }}
-          password: ${{ secrets.VPS_PASSWORD }}   
-          script: |
-            retries=3
-            delay_seconds=20
-
-            for attempt in $(seq "$retries"); do
-            http_status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health)
-              
-              if [ "$http_status" -eq 200 ]; then
-                echo "The service has been successfully raised"
-                echo "status=success" >> "$GITHUB_ENV"
-                exit 0
-              else
-                echo "Error: Service not available (attempt $attempt/$retries)"
-              fi
-
-              if [ "$attempt" -lt "$retries" ]; then
-                sleep "$delay_seconds"
-              fi
-            done
-
-            echo "Failed to start new container."
-            echo "status=failure" >> "$GITHUB_ENV"
-            exit 1
+            docker stop node_exporter || true
+            docker rm node_exporter || true
+            docker pull prom/node-exporter
+            docker run -d --net="host" --pid="host" \
+              -v "/:/host:ro,rslave" \
+              --name node_exporter \
+              prom/node-exporter --path.rootfs=/host
