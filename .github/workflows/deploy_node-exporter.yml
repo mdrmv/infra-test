@@ -9,41 +9,71 @@ on:
         default: 'main'
 
 jobs:
-  deploy-node-exporter:
+  deploy-monitoring:
+    if: github.event.inputs.branch == 'main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
           ref: ${{ github.event.inputs.branch }}
-
-      - name: Set environment variables
-        run: |
-          if [ "${{ github.event.inputs.branch }}" == "main" ]; then
-            echo VPS_HOST="${{ secrets.VPS_HOST }}" >> $GITHUB_ENV
-            echo "SSH_PORT=${{ secrets.SSH_PORT }}" >> $GITHUB_ENV
-            echo "VPS_USERNAME=${{ secrets.VPS_USERNAME }}" >> $GITHUB_ENV
-            echo "VPS_PASSWORD=${{ secrets.VPS_PASSWORD }}" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.branch }}" == "internal" ]; then
-            echo "VPS_HOST=${{ secrets.VPS_HOST_INTERNAL }}" >> $GITHUB_ENV
-            echo "VPS_USERNAME=${{ secrets.VPS_USERNAME_INTERNAL }}" >> $GITHUB_ENV
-            echo "VPS_PASSWORD=${{ secrets.VPS_PASSWORD_INTERNAL }}" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.branch }}" == "stage" ]; then
-            echo "VPS_HOST=${{ secrets.VPS_HOST_STAGE }}" >> $GITHUB_ENV
-            echo "VPS_USERNAME=${{ secrets.VPS_USERNAME_STAGE }}" >> $GITHUB_ENV
-            echo "VPS_PASSWORD=${{ secrets.VPS_PASSWORD_STAGE }}" >> $GITHUB_ENV
-          else
-            echo "Unknown branch: ${{ github.event.inputs.branch }}"
-            exit 1
-          fi
-
+          
       - name: Deploy node_exporter
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ env.VPS_HOST }}
-          port: ${{ env.SSH_PORT }}
-          username: ${{ env.VPS_USERNAME }}
-          password: ${{ env.VPS_PASSWORD }}
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            docker stop node_exporter || true
+            docker rm node_exporter || true
+            docker pull prom/node-exporter
+            docker run -d --net="host" --pid="host" \
+              -v "/:/host:ro,rslave" \
+              --name node_exporter \
+              prom/node-exporter --path.rootfs=/host
+
+
+  deploy-internal:
+    if: github.event.inputs.branch == 'internal'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          
+      - name: Deploy node_exporter
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_INTERNAL }}
+          username: ${{ secrets.VPS_USERNAME_INTERNAL }}
+          password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
+          script: |
+            docker stop node_exporter || true
+            docker rm node_exporter || true
+            docker pull prom/node-exporter
+            docker run -d --net="host" --pid="host" \
+              -v "/:/host:ro,rslave" \
+              --name node_exporter \
+              prom/node-exporter --path.rootfs=/host
+
+  deploy-stage:
+    if: github.event.inputs.branch == 'stage'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          
+      - name: Deploy node_exporter
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_STAGE }}
+          username: ${{ secrets.VPS_USERNAME_STAGE }}
+          password: ${{ secrets.VPS_PASSWORD_STAGE }}
           script: |
             docker stop node_exporter || true
             docker rm node_exporter || true
