@@ -18,14 +18,8 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
-            if [ ! -d /home/${{ secrets.VPS_USERNAME }}/prometheus ]; then
-              mkdir -p /home/${{ secrets.VPS_USERNAME }}/prometheus
-            else
-              rm -rf /home/${{ secrets.VPS_USERNAME }}/prometheus/*
-            fi
-            docker stop prometheus || true
-            docker rm prometheus || true
-
+            rm -rf /home/${{ secrets.VPS_USERNAME }}/prometheus
+            
       - name: Copy Prometheus configuration
         uses: appleboy/scp-action@master
         with:
@@ -34,7 +28,7 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           source: "./prometheus/prometheus.yml"
-          target: "/"
+          target: "/home/${{ secrets.VPS_USERNAME }}/prometheus/"
 
       - name: Deploy Prometheus container
         uses: appleboy/ssh-action@master
