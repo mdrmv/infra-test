@@ -20,7 +20,7 @@ jobs:
       - name: Set environment variables
         run: |
           if [ "${{ github.event.inputs.branch }}" == "main" ]; then
-            echo "VPS_HOST=${{ secrets.VPS_HOST }}" >> $GITHUB_ENV
+            echo VPS_HOST="${{ secrets.VPS_HOST }}" >> $GITHUB_ENV
             echo "SSH_PORT=${{ secrets.SSH_PORT }}" >> $GITHUB_ENV
             echo "VPS_USERNAME=${{ secrets.VPS_USERNAME }}" >> $GITHUB_ENV
             echo "VPS_PASSWORD=${{ secrets.VPS_PASSWORD }}" >> $GITHUB_ENV
