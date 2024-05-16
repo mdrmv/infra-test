@@ -16,11 +16,11 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: ${{ github.event.inputs.branch }}
-  
+
       - name: Set environment variables
         run: |
           BRANCH="${{ github.event.inputs.branch }}"
-          if [ "$BRANCH" = "main" ]; then
+          if [ "$BRANCH" = "monitoring" ]; then
             echo "VPS_HOST=${{ secrets.VPS_HOST }}" >> $GITHUB_ENV
             echo "SSH_PORT=${{ secrets.SSH_PORT }}" >> $GITHUB_ENV
             echo "VPS_USERNAME=${{ secrets.VPS_USERNAME }}" >> $GITHUB_ENV
