@@ -10,7 +10,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Prepare Prometheus directory and remove old container
+      - name: Remove Prometheus directory and remove old container
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -19,6 +19,8 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
             rm -rf /home/${{ secrets.VPS_USERNAME }}/prometheus
+            docker stop prometheus || true
+            docker rm prometheus || true
             
       - name: Copy Prometheus configuration
         uses: appleboy/scp-action@master
