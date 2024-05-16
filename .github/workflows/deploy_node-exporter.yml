@@ -24,8 +24,8 @@ jobs:
           if [ "$BRANCH" = "main" ]; then
             echo "VPS_HOST=${{ secrets.VPS_HOST }}" >> $GITHUB_ENV
             echo "SSH_PORT=${{ secrets.SSH_PORT }}" >> $GITHUB_ENV
-            echo "VPS_USERNAME=${{ secrets.VPS }}" >> $GITHUB_ENV
-            echo "VPS_PASSWORD=${{ secrets.VPS }}" >> $GITHUB_ENV
+            echo "VPS_USERNAME=${{ secrets.VPS_USERNAME }}" >> $GITHUB_ENV
+            echo "VPS_PASSWORD=${{ secrets.VPS_PASSWORD }}" >> $GITHUB_ENV
           elif [ "$BRANCH" = "internal" ]; then
             echo "VPS_HOST=${{ secrets.VPS_HOST_INTERNAL }}" >> $GITHUB_ENV
             echo "SSH_PORT=${{ secrets.SSH_PORT_INTERNAL }}" >> $GITHUB_ENV
