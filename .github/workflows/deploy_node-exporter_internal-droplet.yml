@@ -1,4 +1,4 @@
-name: Deploy node_exporter
+name: Deploy node_exporter on the internal-droplet
 
 on:
   workflow_dispatch:
@@ -17,40 +17,12 @@ jobs:
         with:
           ref: ${{ github.event.inputs.branch }}
 
-      - name: Set environment variables
-        run: |
-          case "${{ github.event.inputs.branch }}" in
-            "main")
-              echo "VPS_HOST=${{ secrets.VPS_HOST }}" >> $GITHUB_ENV
-              echo "SSH_PORT=${{ secrets.SSH_PORT }}" >> $GITHUB_ENV
-              echo "VPS_USERNAME=${{ secrets.VPS_USERNAME }}" >> $GITHUB_ENV
-              echo "VPS_PASSWORD=${{ secrets.VPS_PASSWORD }}" >> $GITHUB_ENV
-              ;;
-            "internal")
-              echo "VPS_HOST=${{ secrets.VPS_HOST_INTERNAL }}" >> $GITHUB_ENV
-              echo "SSH_PORT=${{ secrets.SSH_PORT_INTERNAL }}" >> $GITHUB_ENV
-              echo "VPS_USERNAME=${{ secrets.VPS_USERNAME_INTERNAL }}" >> $GITHUB_ENV
-              echo "VPS_PASSWORD=${{ secrets.VPS_PASSWORD_INTERNAL }}" >> $GITHUB_ENV
-              ;;
-            "stage")
-              echo "VPS_HOST=${{ secrets.VPS_HOST_STAGE }}" >> $GITHUB_ENV
-              echo "SSH_PORT=${{ secrets.SSH_PORT_STAGE }}" >> $GITHUB_ENV
-              echo "VPS_USERNAME=${{ secrets.VPS_USERNAME_STAGE }}" >> $GITHUB_ENV
-              echo "VPS_PASSWORD=${{ secrets.VPS_PASSWORD_STAGE }}" >> $GITHUB_ENV
-              ;;
-            *)
-              echo "Branch not recognized, deployment skipped."
-              exit 1
-              ;;
-          esac
-
       - name: Deploy node_exporter
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ env.VPS_HOST }}
-          port: ${{ env.SSH_PORT }}
-          username: ${{ env.VPS_USERNAME }}
-          password: ${{ env.VPS_PASSWORD }}
+          host: ${{ secrets.VPS_HOST_INTERNAL }}
+          username: ${{ secrets.VPS_USERNAME_INTERNAL }}
+          password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
           script: |
             docker stop node_exporter || true
             docker rm node_exporter || true
