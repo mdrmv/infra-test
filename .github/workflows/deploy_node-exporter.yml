@@ -1,4 +1,4 @@
-name: Deploy node_exporter
+name: Deploy Node_exporter
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ on:
         default: 'main'
 
 jobs:
-  deploy-monitoring:
+  deploy-on-the-monitoring-vps:
     if: github.event.inputs.branch == 'main'
     runs-on: ubuntu-latest
     steps:
@@ -32,14 +32,26 @@ jobs:
             docker run -d --net="host" --pid="host" \
               -v "/:/host:ro,rslave" \
               --name node_exporter \
-              --health-cmd="curl --fail http://localhost:9100/metrics || exit 1" \
-              --health-interval=30s \
-              --health-timeout=10s \
-              --health-retries=3 \
-              prom/node-exporter --path.rootfs=/host
+              prom/node-exporter --path.rootfs=/host \
+              --no-collector.arp              
+
+      - name: Verify node_exporter is running
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            if docker ps --filter "name=node_exporter" --filter "status=running" | grep -q "node_exporter"; then
+              echo "node_exporter is running"
+            else
+              echo "node_exporter is not running"
+              exit 1
+            fi
 
 
-  deploy-internal:
+  deploy-on-the-internal-droplet:
     if: github.event.inputs.branch == 'internal'
     runs-on: ubuntu-latest
     steps:
@@ -61,13 +73,24 @@ jobs:
             docker run -d --net="host" --pid="host" \
               -v "/:/host:ro,rslave" \
               --name node_exporter \
-              --health-cmd="curl --fail http://localhost:9100/metrics || exit 1" \
-              --health-interval=30s \
-              --health-timeout=10s \
-              --health-retries=3 \
-              prom/node-exporter --path.rootfs=/host
+              prom/node-exporter --path.rootfs=/host \
+              --no-collector.arp
 
-  deploy-stage:
+      - name: Verify node_exporter is running
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_INTERNAL }}
+          username: ${{ secrets.VPS_USERNAME_INTERNAL }}
+          password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
+          script: |
+            if docker ps --filter "name=node_exporter" --filter "status=running" | grep -q "node_exporter"; then
+              echo "node_exporter is running"
+            else
+              echo "node_exporter is not running"
+              exit 1
+            fi
+
+  deploy-on-the-tage-droplet:
     if: github.event.inputs.branch == 'stage'
     runs-on: ubuntu-latest
     steps:
@@ -88,9 +111,20 @@ jobs:
             docker pull prom/node-exporter
             docker run -d --net="host" --pid="host" \
               -v "/:/host:ro,rslave" \
-              --name node_expoßrter \
-              --health-cmd="curl --fail http://localhost:9100/metrics || exit 1" \
-              --health-interval=30s \
-              --health-timeout=10s \
-              --health-retries=3 \ß
-              prom/node-exporter --path.rootfs=/hostß
+              --name node_exporter \
+              prom/node-exporter --path.rootfs=/host \
+              --no-collector.arp
+
+      - name: Verify node_exporter is running
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_STAGE }}
+          username: ${{ secrets.VPS_USERNAME_STAGE }}
+          password: ${{ secrets.VPS_PASSWORD_STAGE }}
+          script: |
+            if docker ps --filter "name=node_exporter" --filter "status=running" | grep -q "node_exporter"; then
+              echo "node_exporter is running"
+            else
+              echo "node_exporter is not running"
+              exit 1
+            fi

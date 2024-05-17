@@ -1,4 +1,4 @@
-name: Deploy Prometheus on the monitoring-vps
+name: Deploy Loki on the monitoring-vps
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Remove Prometheus directory and remove old container
+      - name: Remove loki directory and remove old container
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -18,21 +18,21 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
-            rm -rf /home/${{ secrets.VPS_USERNAME }}/prometheus || true
-            docker stop prometheus || true
-            docker rm prometheus || true
+            rm -rf /home/${{ secrets.VPS_USERNAME }}/loki || true
+            docker stop loki || true
+            docker rm loki || true
             
-      - name: Copy Prometheus configuration
+      - name: Copy loki configuration
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
-          source: "./prometheus.yml"
-          target: "/home/${{ secrets.VPS_USERNAME }}/prometheus/"
+          source: "./loki-config.yml"
+          target: "/home/${{ secrets.VPS_USERNAME }}/loki/"
 
-      - name: Deploy Prometheus container
+      - name: Deploy loki container
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -40,11 +40,11 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
-            docker pull prom/prometheus
-            docker run -d -v /var/lib/prometheus:/prometheus \
-              -v /home/${{ secrets.VPS_USERNAME }}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml \
-              --name prometheus --net ngdem -p 9090:9090 prom/prometheus
-
+            docker pull grafana/loki:latest
+            docker run -d --name loki --net ngdem -p 3100:3100 \
+                -v /home/${{ secrets.VPS_USERNAME }}/loki/local-config.yaml:/etc/loki/loki-config.yaml \
+                grafana/loki:latest -config.file=/etc/loki/loki-config.yaml
+  
   healthcheck:
     needs: [deploy]   
     runs-on: ubuntu-latest   
@@ -64,7 +64,7 @@ jobs:
             delay_seconds=20
 
             for attempt in $(seq "$retries"); do
-            http_status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9090/-/healthy)
+            http_status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3100/ready)
               
               if [ "$http_status" -eq 200 ]; then
                 echo "The service has been successfully raised"
