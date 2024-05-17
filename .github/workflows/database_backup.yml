@@ -2,7 +2,7 @@ name: Database Backup and Cleanup
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # Launches every day at 3am UTC
+    - cron: '0 3 * * *'  # Launches everyday at 3am UTC
 
 jobs:
   backup-internal:

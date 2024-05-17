@@ -1,0 +1,71 @@
+name: Deploy Alertmanager on the monitoring-vps
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Stop and remove old Alertmanager container
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            docker stop alertmanager || true
+            docker rm alertmanager || true
+
+      - name: Deploy Alertmanager container
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            docker pull prom/alertmanager
+            docker run -d -v /var/lib/alertmanager:/alertmanager --name alertmanager --net ngdem -p 9093:9093 prom/alertmanager
+
+  healthcheck:
+    needs: [deploy]   
+    runs-on: ubuntu-latest   
+    outputs:   
+      id: healthcheck_output   
+    steps:   
+      - name: Run Healthcheck
+        id: healthcheck_status 
+        uses: appleboy/ssh-action@master   
+        with:   
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}   
+          script: |
+            retries=3
+            delay_seconds=20
+
+            for attempt in $(seq "$retries"); do
+            http_status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9093/-/ready)
+              
+              if [ "$http_status" -eq 200 ]; then
+                echo "The service has been successfully raised"
+                echo "status=success" >> "$GITHUB_ENV"
+                exit 0
+              else
+                echo "Error: Service not available (attempt $attempt/$retries)"
+              fi
+
+              if [ "$attempt" -lt "$retries" ]; then
+                sleep "$delay_seconds"
+              fi
+            done
+
+            echo "Failed to start new container."
+            echo "status=failure" >> "$GITHUB_ENV"
+            exit 1

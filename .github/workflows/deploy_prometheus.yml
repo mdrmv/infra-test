@@ -1,0 +1,84 @@
+name: Deploy Prometheus on the monitoring-vps
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Remove Prometheus directory and remove old container
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            rm -rf /home/${{ secrets.VPS_USERNAME }}/prometheus || true
+            docker stop prometheus || true
+            docker rm prometheus || true
+            
+      - name: Copy Prometheus configuration
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          source: "./prometheus.yml"
+          target: "/home/${{ secrets.VPS_USERNAME }}/prometheus/"
+
+      - name: Deploy Prometheus container
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            docker pull prom/prometheus
+            docker run -d -v /var/lib/prometheus:/prometheus \
+              -v /home/${{ secrets.VPS_USERNAME }}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml \
+              --name prometheus --net ngdem -p 9090:9090 prom/prometheus
+
+  healthcheck:
+    needs: [deploy]   
+    runs-on: ubuntu-latest   
+    outputs:   
+      id: healthcheck_output   
+    steps:   
+      - name: Run Healthcheck
+        id: healthcheck_status 
+        uses: appleboy/ssh-action@master   
+        with:   
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}   
+          script: |
+            retries=3
+            delay_seconds=20
+
+            for attempt in $(seq "$retries"); do
+            http_status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9090/-/healthy)
+              
+              if [ "$http_status" -eq 200 ]; then
+                echo "The service has been successfully raised"
+                echo "status=success" >> "$GITHUB_ENV"
+                exit 0
+              else
+                echo "Error: Service not available (attempt $attempt/$retries)"
+              fi
+
+              if [ "$attempt" -lt "$retries" ]; then
+                sleep "$delay_seconds"
+              fi
+            done
+
+            echo "Failed to start new container."
+            echo "status=failure" >> "$GITHUB_ENV"
+            exit 1
