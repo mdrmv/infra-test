@@ -1,4 +1,4 @@
-name: Deploy Alertmanager
+name: Deploy Alertmanager on the monitoring-vps
 
 on:
   workflow_dispatch:

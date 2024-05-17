@@ -1,4 +1,4 @@
-name: Deploy Grafana
+name: Deploy Grafana on the monitoring-vps
 
 on:
   workflow_dispatch:
