@@ -1,0 +1,182 @@
+name: Deploy Promtail
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'main'
+
+jobs:
+  deploy-on-the-monitoring-vps:
+    if: github.event.inputs.branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Remove promtail directory and remove old container
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            rm -rf /home/${{ secrets.VPS_USERNAME }}/promtail || true
+            docker stop promtail || true
+            docker rm promtail || true
+
+      - name: Copy promtail configuration
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          source: "./monitoring-promtail-config.yml"
+          target: "/home/${{ secrets.VPS_USERNAME }}/promtail/"
+
+      - name: Deploy promtail
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            docker pull grafana/promtail:latest
+            docker run -d --name promtail \
+                --volume /home/${{ secrets.VPS_USERNAME }}/promtail/monitoring-promtail-config.yml:/etc/promtail/config.yml \
+                --volume /var/run/docker.sock:/var/run/docker.sock grafana/promtail:latest \
+                -config.file=/etc/promtail/config.yml
+
+      - name: Verify promtail is running
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            if docker ps --filter "name=promtail" --filter "status=running" | grep -q "promtail"; then
+              echo "promtail is running"
+            else
+              echo "promtail is not running"
+              exit 1
+            fi
+
+  deploy-on-the-internal-droplet:
+    if: github.event.inputs.branch == 'internal'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Remove promtail directory and remove old container
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_INTERNAL }}
+          username: ${{ secrets.VPS_USERNAME_INTERNAL }}
+          password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
+          script: |
+            rm -rf /home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail || true
+            docker stop promtail || true
+            docker rm promtail || true
+
+      - name: Copy promtail configuration
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_INTERNAL }}
+          username: ${{ secrets.VPS_USERNAME_INTERNAL }}
+          password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
+          source: "./internal-promtail-config.yml"
+          target: "/home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail/"
+
+      - name: Deploy promtail
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_INTERNAL }}
+          username: ${{ secrets.VPS_USERNAME_INTERNAL }}
+          password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
+          script: |
+            docker pull grafana/promtail:latest
+            docker run -d --name promtail \
+                --volume /home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail/monitoring-promtail-config.yml:/etc/promtail/config.yml \
+                --volume /var/run/docker.sock:/var/run/docker.sock grafana/promtail:latest \
+                -config.file=/etc/promtail/config.yml
+
+      - name: Verify promtail is running
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_INTERNAL }}
+          username: ${{ secrets.VPS_USERNAME_INTERNAL }}
+          password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
+          script: |
+            if docker ps --filter "name=promtail" --filter "status=running" | grep -q "promtail"; then
+              echo "promtail is running"
+            else
+              echo "promtail is not running"
+              exit 1
+            fi
+
+  deploy-on-the-stage-droplet:
+    if: github.event.inputs.branch == 'stage'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Remove promtail directory and remove old container
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_STAGE }}
+          username: ${{ secrets.VPS_USERNAME_STAGE }}
+          password: ${{ secrets.VPS_PASSWORD_STAGE }}
+          script: |
+            rm -rf /home/${{ secrets.VPS_USERNAME_STAGE }}/promtail || true
+            docker stop promtail || true
+            docker rm promtail || true
+
+      - name: Copy promtail configuration
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_STAGE }}
+          username: ${{ secrets.VPS_USERNAME_STAGE }}
+          password: ${{ secrets.VPS_PASSWORD_STAGE }}
+          source: "./stage-promtail-config.yml"
+          target: "/home/${{ secrets.VPS_USERNAME_STAGE }}/promtail/"
+
+      - name: Deploy promtail
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_STAGE }}
+          username: ${{ secrets.VPS_USERNAME_STAGE }}
+          password: ${{ secrets.VPS_PASSWORD_STAGE }}
+          script: |
+            docker pull grafana/promtail:latest
+            docker run -d --name promtail \
+                --volume /home/${{ secrets.VPS_USERNAME_STAGE }}/promtail/monitoring-promtail-config.yml:/etc/promtail/config.yml \
+                --volume /var/run/docker.sock:/var/run/docker.sock grafana/promtail:latest \
+                -config.file=/etc/promtail/config.yml
+ 
+      - name: Verify promtail is running
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_STAGE }}
+          username: ${{ secrets.VPS_USERNAME_STAGE }}
+          password: ${{ secrets.VPS_PASSWORD_STAGE }}
+          script: |
+            if docker ps --filter "name=promtail" --filter "status=running" | grep -q "promtail"; then
+              echo "promtail is running"
+            else
+              echo "promtail is not running"
+              exit 1
+            fi
