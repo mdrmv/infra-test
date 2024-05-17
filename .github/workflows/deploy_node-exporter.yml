@@ -1,0 +1,135 @@
+name: Deploy Node_exporter
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'main'
+        type: choice
+        options:
+          - main
+          - internal
+          - stage
+
+jobs:
+  deploy-on-the-monitoring-vps:
+    if: github.event.inputs.branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          
+      - name: Deploy node_exporter
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            docker stop node_exporter || true
+            docker rm node_exporter || true
+            docker pull prom/node-exporter
+            docker run -d --net="host" --pid="host" \
+              -v "/:/host:ro,rslave" \
+              --name node_exporter \
+              prom/node-exporter --path.rootfs=/host \
+              --no-collector.arp              
+
+      - name: Verify node_exporter is running
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            if docker ps --filter "name=node_exporter" --filter "status=running" | grep -q "node_exporter"; then
+              echo "node_exporter is running"
+            else
+              echo "node_exporter is not running"
+              exit 1
+            fi
+
+
+  deploy-on-the-internal-droplet:
+    if: github.event.inputs.branch == 'internal'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          
+      - name: Deploy node_exporter
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_INTERNAL }}
+          username: ${{ secrets.VPS_USERNAME_INTERNAL }}
+          password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
+          script: |
+            docker stop node_exporter || true
+            docker rm node_exporter || true
+            docker pull prom/node-exporter
+            docker run -d --net="host" --pid="host" \
+              -v "/:/host:ro,rslave" \
+              --name node_exporter \
+              prom/node-exporter --path.rootfs=/host \
+              --no-collector.arp
+
+      - name: Verify node_exporter is running
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_INTERNAL }}
+          username: ${{ secrets.VPS_USERNAME_INTERNAL }}
+          password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
+          script: |
+            if docker ps --filter "name=node_exporter" --filter "status=running" | grep -q "node_exporter"; then
+              echo "node_exporter is running"
+            else
+              echo "node_exporter is not running"
+              exit 1
+            fi
+
+  deploy-on-the-tage-droplet:
+    if: github.event.inputs.branch == 'stage'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          
+      - name: Deploy node_exporter
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_STAGE }}
+          username: ${{ secrets.VPS_USERNAME_STAGE }}
+          password: ${{ secrets.VPS_PASSWORD_STAGE }}
+          script: |
+            docker stop node_exporter || true
+            docker rm node_exporter || true
+            docker pull prom/node-exporter
+            docker run -d --net="host" --pid="host" \
+              -v "/:/host:ro,rslave" \
+              --name node_exporter \
+              prom/node-exporter --path.rootfs=/host \
+              --no-collector.arp
+
+      - name: Verify node_exporter is running
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_STAGE }}
+          username: ${{ secrets.VPS_USERNAME_STAGE }}
+          password: ${{ secrets.VPS_PASSWORD_STAGE }}
+          script: |
+            if docker ps --filter "name=node_exporter" --filter "status=running" | grep -q "node_exporter"; then
+              echo "node_exporter is running"
+            else
+              echo "node_exporter is not running"
+              exit 1
+            fi

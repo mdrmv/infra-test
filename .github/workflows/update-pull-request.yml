@@ -1,0 +1,25 @@
+name: Update pull request title and body
+
+on: [pull_request]
+
+concurrency:
+  group: ci-update-pr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  update_pr:
+    if: startsWith(github.head_ref, 'NGD-') || startsWith(github.head_ref, 'ngd-')
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+    - uses: tzkhan/pr-update-action@v2
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        base-branch-regex: ''
+        head-branch-regex: 'ngd-\d+'
+        title-template: '[%headbranch%] '
+        title-update-action: 'prefix'
+        body-template: |
+          [Link to %headbranch%](https://ngdem.atlassian.net/browse/%headbranch%)
+        body-update-action: 'suffix'
+        body-uppercase-base-match: false
