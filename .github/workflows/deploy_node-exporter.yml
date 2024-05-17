@@ -7,6 +7,11 @@ on:
         description: 'Branch to deploy'
         required: true
         default: 'main'
+        type: choice
+        options:
+          - main
+          - internal
+          - stage
 
 jobs:
   deploy-on-the-monitoring-vps:
