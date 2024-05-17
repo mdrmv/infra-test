@@ -42,7 +42,7 @@ jobs:
           script: |
             docker pull grafana/loki:latest
             docker run -d --name loki --net ngdem -p 3100:3100 \
-                -v /home/${{ secrets.VPS_USERNAME }}/loki/local-config.yaml:/etc/loki/loki-config.yaml \
+                -v /home/${{ secrets.VPS_USERNAME }}/loki/loki-config.yml:/etc/loki/loki-config.yaml \
                 grafana/loki:latest -config.file=/etc/loki/loki-config.yaml
   
   healthcheck:
