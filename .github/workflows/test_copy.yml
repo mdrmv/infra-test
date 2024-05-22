@@ -11,10 +11,10 @@ jobs:
         uses: actions/checkout@v2
            
       - name: Copy configuration
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST_INTERNAL }}
           username: ${{ secrets.VPS_USERNAME_INTERNAL }}
           password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
-          source: "ngdem-infra/stage-promtail-config.yml"
+          source: "./stage-promtail-config.yml"
           target: "/home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail/"
