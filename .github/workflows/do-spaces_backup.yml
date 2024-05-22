@@ -1,0 +1,45 @@
+name: Backup DigitalOcean Spaces to Local Server
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Launches everyday at 2am UTC
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Backup DigitalOcean Spaces region fra1 to Local Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            # It is assumed that s3cmd is installed on the VPS (sudo apt-get update, sudo apt-get install)
+            # s3cmd configuration using environment variables
+            cat <<EOF > ~/.s3cfg
+            [default]
+            access_key = ${{ secrets.AWS_ACCESS_KEY_ID }}
+            secret_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            host_base = fra1.digitaloceanspaces.com
+            host_bucket = %(bucket)s.fra1.digitaloceanspaces.com
+            signature_v2 = False
+            use_https = True
+            EOF
+
+            # Environment variables for buckets ("ngdem-private-internal" "ngdem-private-stage")
+            BUCKETS=("ngdem-private-stage")
+
+            for BUCKET in "${BUCKETS[@]}"; do
+              if s3cmd ls s3://$BUCKET &> /dev/null; then
+                echo "Syncing $BUCKET..."
+                s3cmd sync s3://$BUCKET/ /mnt/io-db-backups/s3/$BUCKET/
+              else
+                echo "Bucket $BUCKET does not exist."
+              fi
+            done
