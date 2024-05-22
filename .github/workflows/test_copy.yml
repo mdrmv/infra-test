@@ -10,11 +10,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
            
-      - name: Copy Prometheus configuration
+      - name: Copy configuration
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.VPS_HOST_INTERNAL }}
           username: ${{ secrets.VPS_USERNAME_INTERNAL }}
           password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
-          source: "./stage-promtail-config.yml"
-          target: "/home/${{ secrets.VPS_USERNAME_STAGE }}/promtail/"
+          source: "ngdem-infra/stage-promtail-config.yml"
+          target: "/home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail/"
