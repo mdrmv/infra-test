@@ -36,7 +36,7 @@ jobs:
             docker rm promtail || true
 
       - name: Copy promtail configuration
-        uses: appleboy/scp-action@0.1.3
+        uses: appleboy/scp-action@v0.1.3
         with:
           host: ${{ secrets.VPS_HOST }}
           port: ${{ secrets.SSH_PORT }}
@@ -95,7 +95,7 @@ jobs:
             docker rm promtail || true
 
       - name: Copy promtail configuration
-        uses: appleboy/scp-action@0.1.3
+        uses: appleboy/scp-action@v0.1.3
         with:
           host: ${{ secrets.VPS_HOST_INTERNAL }}
           username: ${{ secrets.VPS_USERNAME_INTERNAL }}
@@ -151,7 +151,7 @@ jobs:
             docker rm promtail || true
 
       - name: Copy promtail configuration
-        uses: appleboy/scp-action@0.1.3
+        uses: appleboy/scp-action@v0.1.3
         with:
           host: ${{ secrets.VPS_HOST_STAGE }}
           username: ${{ secrets.VPS_USERNAME_STAGE }}
