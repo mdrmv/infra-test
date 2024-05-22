@@ -1,11 +1,9 @@
 name: Backup DigitalOcean Spaces to Local Server
 
 on:
-    workflow_dispatch:
-# on:
 #   schedule:
 #     - cron: '0 2 * * *' # Запуск каждый день в 2:00
-#   workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -34,14 +32,11 @@ jobs:
             [default]
             access_key = ${{ secrets.AWS_ACCESS_KEY_ID }}
             secret_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            host_base = nyc3.digitaloceanspaces.com
-            host_bucket = %(bucket)s.nyc3.digitaloceanspaces.com
+            host_base = fra1.digitaloceanspaces.com
+            host_bucket = %(bucket)s.fra1.digitaloceanspaces.com
             signature_v2 = False
             use_https = True
             EOF
-
-            # Создание директории для бэкапов
-            mkdir -p /home/${{ secrets.VPS_USERNAME }}/s3
 
             # Переменные окружения для бакетов
             BUCKETS=("ngdem-internal-public" "ngdem-stage-public")
@@ -49,9 +44,8 @@ jobs:
             for BUCKET in "${BUCKETS[@]}"; do
               if s3cmd ls s3://$BUCKET &> /dev/null; then
                 echo "Syncing $BUCKET..."
-                s3cmd sync s3://$BUCKET/ /mnt/io-db-backups/s3/$BUCKET/
+                s3cmd sync s3://$BUCKET/ /home/${{ secrets.VPS_USERNAME }}/s3/$BUCKET/
               else
                 echo "Bucket $BUCKET does not exist."
               fi
             done
-
