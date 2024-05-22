@@ -8,6 +8,9 @@ jobs:
   backup-internal:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
       - name: Run backup script via SSH for internal DB
         uses: appleboy/ssh-action@master
         with:
@@ -28,7 +31,7 @@ jobs:
                 echo "Backup successful for $DB"
               else
                 echo "Backup failed for $DB"
-                exit 1
+                exit 1:
               fi
             done
 
