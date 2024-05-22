@@ -8,32 +8,32 @@ on:
 #   workflow_dispatch:
 
 jobs:
-  backup:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Backup DigitalOcean Spaces to Local Server
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        port: ${{ secrets.SSH_PORT }}
-        username: ${{ secrets.VPS_USERNAME }}
-        password: ${{ secrets.VPS_PASSWORD }}
-        script: |
+      - name: Backup DigitalOcean Spaces to Local Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
             # Установка s3cmd если не установлен
             if ! command -v s3cmd &> /dev/null; then
               sudo apt-get update
               sudo apt-get install -y s3cmd
             fi
 
-            # Конфигурация s3cmd
+            # Конфигурация s3cmd с использованием переменных окружения
             cat <<EOF > ~/.s3cfg
             [default]
-            access_key = ${{ secrets.DO_ACCESS_KEY }}
-            secret_key = ${{ secrets.DO_SECRET_KEY }}
+            access_key = ${{ secrets.AWS_ACCESS_KEY_ID }}
+            secret_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             host_base = nyc3.digitaloceanspaces.com
             host_bucket = %(bucket)s.nyc3.digitaloceanspaces.com
             signature_v2 = False
@@ -43,9 +43,14 @@ jobs:
             # Создание директории для бэкапов
             mkdir -p /mnt/io-db-backups/s3
 
-            # Синхронизация бакетов
-            # s3cmd sync s3://ngdem-private-internal/ /mnt/io-db-backups/s3/ngdem-private-internal/
-            # s3cmd sync s3://ngdem-private-stage/ /mnt/io-db-backups/s3/ngdem-private-stage/
-            s3cmd sync s3://ngdem-internal-public/ /mnt/io-db-backups/s3/ngdem-internal-public/
-            s3cmd sync s3://ngdem-stage-public/ /mnt/io-db-backups/s3/ngdem-stage-public/
-            s3cmd sync s3://example-2/ /mnt/io-db-backups/s3/example-2/
+            # Переменные окружения для бакетов
+            BUCKETS=("ngdem-private-internal" "ngdem-private-stage" "ngdem-internal-public" "ngdem-stage-public" "example-2")
+
+            for BUCKET in "${BUCKETS[@]}"; do
+              if s3cmd ls s3://$BUCKET &> /dev/null; then
+                echo "Syncing $BUCKET..."
+                s3cmd sync s3://$BUCKET/ /mnt/io-db-backups/s3/$BUCKET/
+              else
+                echo "Bucket $BUCKET does not exist."
+              fi
+            done
