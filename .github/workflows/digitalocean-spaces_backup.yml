@@ -41,10 +41,10 @@ jobs:
             EOF
 
             # Создание директории для бэкапов
-            mkdir -p /mnt/io-db-backups/s3
+            mkdir -p /home/${{ secrets.VPS_USERNAME }}/s3
 
             # Переменные окружения для бакетов
-            BUCKETS=("ngdem-private-internal" "ngdem-private-stage" "ngdem-internal-public" "ngdem-stage-public" "example-2")
+            BUCKETS=("ngdem-internal-public" "ngdem-stage-public")
 
             for BUCKET in "${BUCKETS[@]}"; do
               if s3cmd ls s3://$BUCKET &> /dev/null; then
@@ -54,3 +54,4 @@ jobs:
                 echo "Bucket $BUCKET does not exist."
               fi
             done
+
