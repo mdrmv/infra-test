@@ -32,8 +32,8 @@ jobs:
             # Конфигурация s3cmd
             cat <<EOF > ~/.s3cfg
             [default]
-            access_key = ${{ secrets.DO_ACCESS_KEY }}
-            secret_key = ${{ secrets.DO_SECRET_KEY }}
+            access_key = ${{ secrets.AWS_ACCESS_KEY_ID }}
+            secret_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             host_base = nyc3.digitaloceanspaces.com
             host_bucket = %(bucket)s.nyc3.digitaloceanspaces.com
             signature_v2 = False
@@ -41,11 +41,11 @@ jobs:
             EOF
 
             # Создание директории для бэкапов
-            mkdir -p /mnt/io-db-backups/s3
+            mkdir -p /home/${{ secrets.VPS_USERNAME }}/s3
 
             # Синхронизация бакетов
-            # s3cmd sync s3://ngdem-private-internal/ /mnt/io-db-backups/s3/ngdem-private-internal/
-            # s3cmd sync s3://ngdem-private-stage/ /mnt/io-db-backups/s3/ngdem-private-stage/
-            s3cmd sync s3://ngdem-internal-public/ /mnt/io-db-backups/s3/ngdem-internal-public/
-            s3cmd sync s3://ngdem-stage-public/ /mnt/io-db-backups/s3/ngdem-stage-public/
-            s3cmd sync s3://example-2/ /mnt/io-db-backups/s3/example-2/
+            # s3cmd sync s3://ngdem-private-internal/ /home/${{ secrets.VPS_USERNAME }}/s3/ngdem-private-internal/
+            # s3cmd sync s3://ngdem-private-stage/ /home/${{ secrets.VPS_USERNAME }}/s3/ngdem-private-stage/
+            s3cmd sync s3://ngdem-internal-public/ /home/${{ secrets.VPS_USERNAME }}/s3/ngdem-internal-public/
+            s3cmd sync s3://ngdem-stage-public/ /home/${{ secrets.VPS_USERNAME }}/s3/ngdem-stage-public/
+            #s3cmd sync s3://example-2/ /home/${{ secrets.VPS_USERNAME }}/s3/example-2/
