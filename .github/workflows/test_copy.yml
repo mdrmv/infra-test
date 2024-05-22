@@ -16,5 +16,6 @@ jobs:
           host: ${{ secrets.VPS_HOST_INTERNAL }}
           username: ${{ secrets.VPS_USERNAME_INTERNAL }}
           password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
-          source: "ngdem-infra/stage-promtail-config.yml"
+          port: 22
+          source: "./stage-promtail-config.yml"
           target: "/home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail/"
