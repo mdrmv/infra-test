@@ -10,11 +10,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
            
-      - name: Copy configuration
+      - name: Copy promtail configuration
         uses: appleboy/scp-action@v0.1.3
         with:
-          host: ${{ secrets.VPS_HOST_INTERNAL }}
-          username: ${{ secrets.VPS_USERNAME_INTERNAL }}
-          password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
+          host: ${{ secrets.VPS_HOST_STAGE }}
+          username: ${{ secrets.VPS_USERNAME_STAGE }}
+          password: ${{ secrets.VPS_PASSWORD_STAGE }}
           source: "./stage-promtail-config.yml"
-          target: "/home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail/"
+          target: "/home/${{ secrets.VPS_USERNAME_STAGE }}/promtail/"
