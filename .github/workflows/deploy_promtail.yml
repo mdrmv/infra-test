@@ -16,6 +16,8 @@ on:
 jobs:
   deploy-on-the-monitoring-vps:
     if: github.event.inputs.branch == 'main'
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -76,6 +78,8 @@ jobs:
 
   deploy-on-the-internal-droplet:
     if: github.event.inputs.branch == 'internal'
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -132,6 +136,8 @@ jobs:
 
   deploy-on-the-stage-droplet:
     if: github.event.inputs.branch == 'stage'
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
