@@ -33,7 +33,7 @@ jobs:
           source: "./monitoring-promtail-config.yml"
           target: "/home/${{ secrets.VPS_USERNAME }}/promtail/"
 
-      - name: Deploy promtail
+      - name: Deploy and verify promtail
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -46,15 +46,7 @@ jobs:
             docker pull grafana/promtail:latest
             docker run -d --name promtail --volume /home/${{ secrets.VPS_USERNAME }}/promtail/monitoring-promtail-config.yml:/etc/promtail/config.yml --volume /var/run/docker.sock:/var/run/docker.sock grafana/promtail:latest -config.file=/etc/promtail/config.yml
 
-      - name: Verify promtail is running
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.VPS_USERNAME }}
-          password: ${{ secrets.VPS_PASSWORD }}
-          script: |
-            sleep 30
+            sleep 10
             if docker ps --filter "name=promtail" --filter "status=running" | grep -q "promtail"; then
               echo "promtail is running"
             else
@@ -80,7 +72,7 @@ jobs:
           source: "./internal-promtail-config.yml"
           target: "/home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail/"
 
-      - name: Deploy promtail
+      - name: Deploy and verify promtail
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST_INTERNAL }}
@@ -92,14 +84,7 @@ jobs:
             docker pull grafana/promtail:latest
             docker run -d --name promtail --volume /home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail/internal-promtail-config.yml:/etc/promtail/config.yml --volume /var/run/docker.sock:/var/run/docker.sock grafana/promtail:latest -config.file=/etc/promtail/config.yml
 
-      - name: Verify promtail is running
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_HOST_INTERNAL }}
-          username: ${{ secrets.VPS_USERNAME_INTERNAL }}
-          password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
-          script: |
-            sleep 30
+            sleep 10
             if docker ps --filter "name=promtail" --filter "status=running" | grep -q "promtail"; then
               echo "promtail is running"
             else
@@ -125,7 +110,7 @@ jobs:
           source: "./stage-promtail-config.yml"
           target: "/home/${{ secrets.VPS_USERNAME_STAGE }}/promtail/"
 
-      - name: Deploy promtail
+      - name: Deploy and verify promtail
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST_STAGE }}
@@ -137,14 +122,7 @@ jobs:
             docker pull grafana/promtail:latest
             docker run -d --name promtail --volume /home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail/stage-promtail-config.yml:/etc/promtail/config.yml --volume /var/run/docker.sock:/var/run/docker.sock grafana/promtail:latest -config.file=/etc/promtail/config.yml
 
-      - name: Verify promtail is running
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_HOST_STAGE }}
-          username: ${{ secrets.VPS_USERNAME_STAGE }}
-          password: ${{ secrets.VPS_PASSWORD_STAGE }}
-          script: |
-            sleep 30
+            sleep 10
             if docker ps --filter "name=promtail" --filter "status=running" | grep -q "promtail"; then
               echo "promtail is running"
             else
