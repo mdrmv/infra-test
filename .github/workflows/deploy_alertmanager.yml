@@ -29,7 +29,7 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
-            docker pull prom/alertmanager
+            docker pull prom/alertmanager:v0.23.0
             docker run -d -v /var/lib/alertmanager:/alertmanager --name alertmanager --net ngdem -p 9093:9093 prom/alertmanager
 
   healthcheck:

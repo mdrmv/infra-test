@@ -17,7 +17,7 @@ jobs:
           script: |
             docker stop grafana || true
             docker rm grafana || true
-            docker pull grafana/grafana
+            docker pull grafana/grafana:10.4.3
             docker run -d -v /var/lib/grafana:/var/lib/grafana --name grafana --net ngdem -p 3000:3000 grafana/grafana
 
   healthcheck:
