@@ -10,16 +10,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
            
-      - name: Remove promtail directory and remove old container
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_HOST_INTERNAL }}
-          username: ${{ secrets.VPS_USERNAME_INTERNAL }}
-          password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
-          script: |
-            rm -rf /home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail || true
-            docker stop promtail || true
-            docker rm promtail || true
+      # - name: Remove promtail directory and remove old container
+      #   uses: appleboy/ssh-action@master
+      #   with:
+      #     host: ${{ secrets.VPS_HOST_INTERNAL }}
+      #     username: ${{ secrets.VPS_USERNAME_INTERNAL }}
+      #     password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
+      #     script: |
+      #       rm -rf /home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail || true
+      #       docker stop promtail || true
+      #       docker rm promtail || true
 
       - name: Copy promtail configuration
         uses: appleboy/scp-action@v0.1.3
@@ -38,6 +38,8 @@ jobs:
           username: ${{ secrets.VPS_USERNAME_INTERNAL }}
           password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
           script: |
+            docker stop promtail || true
+            docker rm promtail || true
             docker pull grafana/promtail:latest
             docker run -d --name promtail --volume /home/github-actions/promtail/internal-promtail-config.yml:/etc/promtail/config.yml --volume /var/run/docker.sock:/var/run/docker.sock grafana/promtail:latest -config.file=/etc/promtail/config.yml
           debug: true
