@@ -54,6 +54,7 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
+            sleep 30
             if docker ps --filter "name=promtail" --filter "status=running" | grep -q "promtail"; then
               echo "promtail is running"
             else
@@ -98,6 +99,7 @@ jobs:
           username: ${{ secrets.VPS_USERNAME_INTERNAL }}
           password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
           script: |
+            sleep 30
             if docker ps --filter "name=promtail" --filter "status=running" | grep -q "promtail"; then
               echo "promtail is running"
             else
@@ -142,6 +144,7 @@ jobs:
           username: ${{ secrets.VPS_USERNAME_STAGE }}
           password: ${{ secrets.VPS_PASSWORD_STAGE }}
           script: |
+            sleep 30
             if docker ps --filter "name=promtail" --filter "status=running" | grep -q "promtail"; then
               echo "promtail is running"
             else
