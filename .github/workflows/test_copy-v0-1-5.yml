@@ -1,0 +1,21 @@
+name: Test copy on the DO droplet scp-action@0.1.5
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+           
+      - name: Copy Prometheus configuration
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: ${{ secrets.VPS_HOST_INTERNAL }}
+          username: ${{ secrets.VPS_USERNAME_INTERNAL }}
+          password: ${{ secrets.VPS_PASSWORD_INTERNAL }}
+          source: "./internal-promtail-config.yml"
+          target: "/home/${{ secrets.VPS_USERNAME_INTERNAL }}/prometheus015/"
+          debug: true
