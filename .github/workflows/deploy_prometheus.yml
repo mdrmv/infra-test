@@ -40,7 +40,7 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
-            docker pull prom/prometheus
+            docker pull prom/prometheus:2.52.0
             docker run -d -v /var/lib/prometheus:/prometheus \
               -v /home/${{ secrets.VPS_USERNAME }}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml \
               --name prometheus --net ngdem -p 9090:9090 prom/prometheus
