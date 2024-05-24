@@ -41,7 +41,7 @@ jobs:
             docker stop promtail || true
             docker rm promtail || true
             docker pull grafana/promtail:latest
-            docker run -d --name promtail --volume /home/github-actions/promtail/internal-promtail-config.yml:/etc/promtail/config.yml --volume /var/run/docker.sock:/var/run/docker.sock grafana/promtail:latest -config.file=/etc/promtail/config.yml
+            docker run -d --name promtail --volume /home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail/internal-promtail-config.yml:/etc/promtail/config.yml --volume /var/run/docker.sock:/var/run/docker.sock grafana/promtail:latest -config.file=/etc/promtail/config.yml
           debug: true
 
       - name: Verify promtail is running
