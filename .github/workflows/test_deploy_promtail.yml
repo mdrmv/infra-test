@@ -34,7 +34,7 @@ jobs:
           target: "/home/${{ secrets.VPS_USERNAME }}/promtail/"
 
       - name: Deploy promtail
-        uses: appleboy/ssh-action@v0.1.4
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           port: ${{ secrets.SSH_PORT }}
@@ -47,7 +47,7 @@ jobs:
             docker run -d --name promtail --volume /home/${{ secrets.VPS_USERNAME }}/promtail/monitoring-promtail-config.yml:/etc/promtail/config.yml --volume /var/run/docker.sock:/var/run/docker.sock grafana/promtail:latest -config.file=/etc/promtail/config.yml
 
       - name: Verify promtail is running
-        uses: appleboy/ssh-action@v0.1.4
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           port: ${{ secrets.SSH_PORT }}
@@ -80,7 +80,7 @@ jobs:
           target: "/home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail/"
 
       - name: Deploy promtail
-        uses: appleboy/ssh-action@v0.1.4
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST_INTERNAL }}
           username: ${{ secrets.VPS_USERNAME_INTERNAL }}
@@ -92,7 +92,7 @@ jobs:
             docker run -d --name promtail --volume /home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail/internal-promtail-config.yml:/etc/promtail/config.yml --volume /var/run/docker.sock:/var/run/docker.sock grafana/promtail:latest -config.file=/etc/promtail/config.yml
 
       - name: Verify promtail is running
-        uses: appleboy/ssh-action@v0.1.4
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST_INTERNAL }}
           username: ${{ secrets.VPS_USERNAME_INTERNAL }}
@@ -124,7 +124,7 @@ jobs:
           target: "/home/${{ secrets.VPS_USERNAME_STAGE }}/promtail/"
 
       - name: Deploy promtail
-        uses: appleboy/ssh-action@v0.1.4
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST_STAGE }}
           username: ${{ secrets.VPS_USERNAME_STAGE }}
@@ -136,7 +136,7 @@ jobs:
             docker run -d --name promtail --volume /home/${{ secrets.VPS_USERNAME_INTERNAL }}/promtail/stage-promtail-config.yml:/etc/promtail/config.yml --volume /var/run/docker.sock:/var/run/docker.sock grafana/promtail:latest -config.file=/etc/promtail/config.yml
 
       - name: Verify promtail is running
-        uses: appleboy/ssh-action@v0.1.4
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST_STAGE }}
           username: ${{ secrets.VPS_USERNAME_STAGE }}
