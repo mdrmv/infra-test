@@ -10,27 +10,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Stop and remove old Alertmanager container
+      - name: Remove old container and deploy Alertmanager container
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.VPS_USERNAME }}
-          password: ${{ secrets.VPS_PASSWORD }}
+          key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             docker stop alertmanager || true
             docker rm alertmanager || true
-
-      - name: Deploy Alertmanager container
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.VPS_USERNAME }}
-          password: ${{ secrets.VPS_PASSWORD }}
-          script: |
             docker pull prom/alertmanager
-            docker run -d -v /var/lib/alertmanager:/alertmanager --name alertmanager --net ngdem -p 9093:9093 prom/alertmanager
+            docker run -d --restart=unless-stopped -v /var/lib/alertmanager:/alertmanager --name alertmanager --net ngdem -p 9093:9093 prom/alertmanager
 
   healthcheck:
     needs: [deploy]   
@@ -45,7 +36,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.VPS_USERNAME }}
-          password: ${{ secrets.VPS_PASSWORD }}   
+          key: ${{ secrets.VPS_SSH_KEY }}   
           script: |
             retries=3
             delay_seconds=20
