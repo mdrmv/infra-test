@@ -1,4 +1,4 @@
-name: Deploy Alertmanager on the monitoring-vps
+name: Deploy Alertmanager
 
 on:
   workflow_dispatch:
@@ -8,20 +8,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
-      - name: Remove old container and deploy Alertmanager container
+      - name: Stop and remove old Alertmanager container
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          password: ${{ secrets.VPS_PASSWORD }}
           script: |
             docker stop alertmanager || true
             docker rm alertmanager || true
-            docker pull prom/alertmanager
-            docker run -d --restart=unless-stopped -v /var/lib/alertmanager:/alertmanager --name alertmanager --net ngdem -p 9093:9093 prom/alertmanager
+
+      - name: Deploy Alertmanager container
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            docker pull prom/alertmanager:v0.23.0
+            docker run -d -v /var/lib/alertmanager:/alertmanager --name alertmanager --net ngdem -p 9093:9093 prom/alertmanager
 
   healthcheck:
     needs: [deploy]   
@@ -36,7 +45,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}   
+          password: ${{ secrets.VPS_PASSWORD }}   
           script: |
             retries=3
             delay_seconds=20
