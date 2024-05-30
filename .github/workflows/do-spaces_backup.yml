@@ -18,7 +18,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.VPS_USERNAME }}
-          password: ${{ secrets.VPS_PASSWORD }}
+          key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             # It is assumed that s3cmd is installed on the VPS (sudo apt-get update, sudo apt-get install)
             # s3cmd configuration using environment variables
