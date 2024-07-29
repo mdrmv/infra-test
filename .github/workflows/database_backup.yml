@@ -14,10 +14,10 @@ jobs:
       - name: Run backup script via SSH for internal DB
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.VPS_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          host: ${{ secrets.BCKPSVPS_HOST }}
+          port: ${{ secrets.BCKPSVPS_SSH_PORT }}
+          username: ${{ secrets.BCKPSVPS_USERNAME }}
+          key: ${{ secrets.BCKPSVPS_SSH_KEY }}
           script: |
             DATABASES=("defaultdb" "admin-ms" "client-ms" "notification-ms" "user-ms")
             BACKUP_PATH="/mnt/io-db-backups/internal-db/"
@@ -38,10 +38,10 @@ jobs:
       - name: Cleanup old backups in internal DB folder
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.VPS_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          host: ${{ secrets.BCKPSVPS_HOST }}
+          port: ${{ secrets.BCKPSVPS_SSH_PORT }}
+          username: ${{ secrets.BCKPSVPS_USERNAME }}
+          key: ${{ secrets.BCKPSVPS_SSH_KEY }}
           script: |
             find /mnt/io-db-backups/internal-db/ -type f -name '*.sql' -mtime +336 -exec rm {} \;
 
@@ -51,10 +51,10 @@ jobs:
       - name: Run backup script via SSH for stage DB
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.VPS_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          host: ${{ secrets.BCKPSVPS_HOST }}
+          port: ${{ secrets.BCKPSVPS_SSH_PORT }}
+          username: ${{ secrets.BCKPSVPS_USERNAME }}
+          key: ${{ secrets.BCKPSVPS_SSH_KEY }}
           script: |
             DATABASES=("defaultdb" "admin-ms" "client-ms" "notification-ms" "user-ms")
             BACKUP_PATH="/mnt/io-db-backups/stage-db/"
@@ -75,9 +75,9 @@ jobs:
       - name: Cleanup old backups in stage DB folder
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.VPS_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          host: ${{ secrets.BCKPSVPS_HOST }}
+          port: ${{ secrets.BCKPSVPS_SSH_PORT }}
+          username: ${{ secrets.BCKPSVPS_USERNAME }}
+          key: ${{ secrets.BCKPSVPS_SSH_KEY }}
           script: |
             find /mnt/io-db-backups/stage-db/ -type f -name '*.sql' -mtime +336 -exec rm {} \;
