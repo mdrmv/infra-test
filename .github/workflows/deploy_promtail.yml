@@ -44,9 +44,9 @@ jobs:
             docker stop promtail || true
             docker rm promtail || true
             docker pull grafana/promtail:latest
-            docker run -d --restart=unless-stopped --name promtail --volume /home/${{ secrets.VPS_USERNAME }}/promtail/monitoring-promtail-config.yml:/etc/promtail/config.yml \
+            docker run -d --restart=unless-stopped --name promtail --network ngdem --volume /home/${{ secrets.VPS_USERNAME }}/promtail/monitoring-promtail-config.yml:/etc/promtail/config.yml \
                 --volume /var/run/docker.sock:/var/run/docker.sock grafana/promtail:latest \
-                -config.file=/etc/promtail/config.yml
+                -config.file=/etc/promtail/config.ym
 
             sleep 10
             if docker ps --filter "name=promtail" --filter "status=running" | grep -q "promtail"; then

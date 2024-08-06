@@ -34,7 +34,7 @@ jobs:
             docker stop node_exporter || true
             docker rm node_exporter || true
             docker pull prom/node-exporter
-            docker run -d --restart=unless-stopped --net="host" --pid="host" \
+            docker run -d --restart=unless-stopped --net="ngdem" --pid="host" \
               -v "/:/host:ro,rslave" \
               --name node_exporter \
               prom/node-exporter --path.rootfs=/host \

@@ -15,10 +15,10 @@ jobs:
       - name: Backup DigitalOcean Spaces region fra1 to Local Server
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.VPS_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          host: ${{ secrets.BCKPSVPS_HOST }}
+          port: ${{ secrets.BCKPSVPS_SSH_PORT }}
+          username: ${{ secrets.BCKPSVPS_USERNAME }}
+          key: ${{ secrets.BCKPSVPS_SSH_KEY }}
           script: |
             # It is assumed that s3cmd is installed on the VPS (sudo apt-get update, sudo apt-get install)
             # s3cmd configuration using environment variables
