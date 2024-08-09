@@ -1,0 +1,60 @@
+groups:
+- name: alert.rules
+  rules:
+  - alert: InstanceDown
+    expr: up == 0
+    for: 5m
+    labels:
+      severity: 'critical'
+    annotations:
+      summary: "Instance {{ $labels.instance }} down"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes."
+
+  - alert: WarningFreeDiskSpace
+    expr: group((100 - ((node_filesystem_avail_bytes{job=~"node_exporter-stage|node_exporter-internal|node_exporter-monitoring"} * 100) / node_filesystem_size_bytes{job=~"node_exporter-stage|node_exporter-internal|node_exporter-monitoring"})) >= 80) by (instance, device)
+    for: 10s
+    labels:
+      severity: warning
+    annotations:
+      title:  Заканчивается место на диске
+      description: На {{ $labels.instance }} заканчивается место на диске {{ $labels.device }}.
+      grafana:
+
+  - alert: CriticalFreeDiskSpace
+    expr: group((100 - ((node_filesystem_avail_bytes{job=~"node_exporter-stage|node_exporter-internal|node_exporter-monitoring"} * 100) / node_filesystem_size_bytes{job=~"node_exporter-stage|node_exporter-internal|node_exporter-monitoring"})) >= 90) by (instance, device)
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      title:  Заканчивается место на диске
+      description: На {{ $labels.instance }} заканчивается место на диске {{ $labels.device }}.
+      grafana:
+
+  - alert: WarningOutOfMemory
+    expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 30
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      title: Не хватает памяти на хосте
+      description: На {{ $labels.instance }} проблемы с памятью, свободно {{ $value }}%.
+      grafana:
+
+  - alert: CriticalOutOfMemory
+    expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 20
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      title: Не хватает памяти на хосте
+      description: На {{ $labels.instance }} проблемы с памятью, свободно {{ $value }}%.
+      grafana:
+
+  - alert: HostHighCpuLoad
+    expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 85
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      title: Утилится cpu
+      description:  На {{ $labels.instance }} утилится, сейчас {{ $value }}%.
