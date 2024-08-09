@@ -19,7 +19,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "./prometheus.yml"
+          source: "./prometheus.yml, ./first_rules.yml"
           target: "/home/${{ secrets.VPS_USERNAME }}/prometheus/"
 
       - name: Remove old container and deploy Prometheus container
@@ -35,6 +35,7 @@ jobs:
             docker pull prom/prometheus
             docker run -d --restart=unless-stopped -v /var/lib/prometheus:/prometheus \
               -v /home/${{ secrets.VPS_USERNAME }}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml \
+              -v /home/github-actions/prometheus/first_rules.yml:/etc/prometheus/first_rules.yml \
               --name prometheus --net ngdem -p 9090:9090 prom/prometheus
 
   healthcheck:

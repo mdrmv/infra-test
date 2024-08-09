@@ -21,7 +21,9 @@ jobs:
             docker stop alertmanager || true
             docker rm alertmanager || true
             docker pull prom/alertmanager
-            docker run -d --restart=unless-stopped -v /var/lib/alertmanager:/alertmanager --name alertmanager --net ngdem -p 9093:9093 prom/alertmanager
+            docker run -d --restart=unless-stopped -v /var/lib/alertmanager:/alertmanager \
+            -v /home/github-actions/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml \
+            --name alertmanager --net ngdem -p 9093:9093 prom/alertmanager
 
   healthcheck:
     needs: [deploy]   
