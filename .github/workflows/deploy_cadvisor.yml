@@ -1,0 +1,118 @@
+name: Deploy cAdvisor
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'main'
+        type: choice
+        options:
+          - main
+          - internal
+          - stage
+
+jobs:
+  deploy-on-the-monitoring-vps:
+    if: github.event.inputs.branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          
+      - name: Deploy and verify cAdvisor
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            docker stop cadvisor || true
+            docker rm cadvisor || true
+            docker run -d --restart=unless-stopped --net="ngdem" --pid="host" \
+              -v "/:/rootfs:ro" \
+              -v "/var/run:/var/run:ro" \
+              -v "/sys:/sys:ro" \
+              -v "/var/lib/docker/:/var/lib/docker:ro" \
+              -v "/cgroup:/cgroup:ro" \
+              -p 8080:8080   --name=cadvisor   gcr.io/cadvisor/cadvisor:v0.47.1
+            
+            sleep 10
+            if docker ps --filter "name=cadvisor" --filter "status=running" | grep -q "cadvisor"; then
+              echo "cadvisor is running"
+            else
+              echo "cadvisor is not running"
+              exit 1
+            fi
+
+  deploy-on-the-internal-droplet:
+    if: github.event.inputs.branch == 'internal'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          
+      - name: Deploy and verify cAdvisor
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_INTERNAL }}
+          username: ${{ secrets.VPS_USERNAME_INTERNAL }}
+          key: ${{ secrets.VPS_SSH_KEY_INTERNAL }}
+          script: |
+            docker stop cadvisor || true
+            docker rm cadvisor || true
+            docker run -d --restart=unless-stopped --net="ngdem" --pid="host" \
+              -v "/:/rootfs:ro" \
+              -v "/var/run:/var/run:ro" \
+              -v "/sys:/sys:ro" \
+              -v "/var/lib/docker/:/var/lib/docker:ro" \
+              -v "/cgroup:/cgroup:ro" \
+              -p 8080:8080   --name=cadvisor   gcr.io/cadvisor/cadvisor:v0.47.1
+            
+            sleep 10
+            if docker ps --filter "name=cadvisor" --filter "status=running" | grep -q "cadvisor"; then
+              echo "cadvisor is running"
+            else
+              echo "cadvisor is not running"
+              exit 1
+            fi
+
+  deploy-on-the-stage-droplet:
+    if: github.event.inputs.branch == 'stage'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          
+      - name: Deploy and verify cAdvisor
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST_STAGE }}
+          username: ${{ secrets.VPS_USERNAME_STAGE }}
+          key: ${{ secrets.VPS_SSH_KEY_STAGE }}
+          script: |
+            docker stop cadvisor || true
+            docker rm cadvisor || true
+            docker run -d --restart=unless-stopped --net="ngdem" --pid="host" \
+              -v "/:/rootfs:ro" \
+              -v "/var/run:/var/run:ro" \
+              -v "/sys:/sys:ro" \
+              -v "/var/lib/docker/:/var/lib/docker:ro" \
+              -v "/cgroup:/cgroup:ro" \
+              -p 8080:8080   --name=cadvisor   gcr.io/cadvisor/cadvisor:v0.47.1
+            
+            sleep 10
+            if docker ps --filter "name=cadvisor" --filter "status=running" | grep -q "cadvisor"; then
+              echo "cadvisor is running"
+            else
+              echo "cadvisor is not running"
+              exit 1
+            fi
