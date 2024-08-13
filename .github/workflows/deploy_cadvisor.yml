@@ -83,7 +83,7 @@ jobs:
               exit 1
             fi
 
-  deploy-on-the-tage-droplet:
+  deploy-on-the-stage-droplet:
     if: github.event.inputs.branch == 'stage'
     runs-on: ubuntu-latest
     steps:
