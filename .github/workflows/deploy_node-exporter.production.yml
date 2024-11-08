@@ -1,4 +1,4 @@
-name: Deploy Node_exporter
+name: Deploy Node_exporter Production
 
 on:
     workflow_dispatch:
