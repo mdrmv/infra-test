@@ -1,0 +1,46 @@
+name: Deploy Node_exporter
+
+on:
+    workflow_dispatch:
+      inputs:
+        host:
+          description: 'Host to deploy'
+          required: true
+          default: 'production-infra'
+          type: choice
+          options:
+            - production-frontend
+            - production-backend
+            - production-infra
+
+jobs:
+  deploy-on-the-production-hosts:
+    if: github.event.inputs.host == 'production-frontend' || github.event.inputs.host == 'production-backend' || github.event.inputs.host == 'production-infra'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+          
+      - name: Deploy and verify node_exporter
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ github.event.inputs.host == 'production-frontend' && secrets.VPS_HOST_FRONT || github.event.inputs.host == 'production-backend' && secrets.VPS_HOST_BACK || secrets.VPS_HOST_INFRA }}
+          username: ${{ github.event.inputs.host == 'production-frontend' && secrets.VPS_USERNAME_FRONT || github.event.inputs.host == 'production-backend' && secrets.VPS_USERNAME_BACK || secrets.VPS_USERNAME_INFRA }}
+          key: ${{ github.event.inputs.host == 'production-frontend' && secrets.VPS_SSH_KEY_FRONT || github.event.inputs.host == 'production-backend' && secrets.VPS_SSH_KEY_BACK || secrets.VPS_SSH_KEY_INFRA }}
+          script: |
+            docker stop node_exporter || true
+            docker rm node_exporter || true
+            docker pull prom/node-exporter
+            docker run -d --restart=unless-stopped --net="ngdem" --pid="host" \
+              -v "/:/host:ro,rslave" \
+              --name node_exporter \
+              prom/node-exporter --path.rootfs=/host \
+              --no-collector.arp              
+
+            sleep 10
+            if docker ps --filter "name=node_exporter" --filter "status=running" | grep -q "node_exporter"; then
+              echo "node_exporter is running"
+            else
+              echo "node_exporter is not running"
+              exit 1
+            fi
