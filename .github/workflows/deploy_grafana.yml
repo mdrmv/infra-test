@@ -43,6 +43,7 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST_PROD_INFRA }}
+          port: ${{ secrets.VPS_SSH_PORT_PROD }}
           username: ${{ secrets.VPS_USERNAME_PROD_INFRA }}
           key: ${{ secrets.VPS_SSH_KEY_PROD_INFRA }}
           script: |
@@ -60,6 +61,7 @@ jobs:
         uses: appleboy/ssh-action@master   
         with:
           host: ${{ github.event.inputs.host == 'dev_infra-droplet' && secrets.VPS_HOST || secrets.VPS_HOST_PROD_INFRA }}
+          port: ${{ github.event.inputs.host == 'dev_infra-droplet' && secrets.VPS_SSH_PORT || secrets.VPS_SSH_PORT_PROD }}
           username: ${{ github.event.inputs.host == 'dev_infra-droplet' && secrets.VPS_USERNAME || secrets.VPS_USERNAME_PROD_INFRA }}
           key: ${{ github.event.inputs.host == 'dev_infra-droplet' && secrets.VPS_SSH_KEY || secrets.VPS_SSH_KEY_PROD_INFRA }}
           script: |
