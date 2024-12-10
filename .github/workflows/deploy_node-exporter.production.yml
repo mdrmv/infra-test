@@ -25,6 +25,7 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ github.event.inputs.host == 'production-frontend' && secrets.VPS_HOST_FRONT || github.event.inputs.host == 'production-backend' && secrets.VPS_HOST_BACK || secrets.VPS_HOST_INFRA }}
+          port: ${{ secrets.VPS_SSH_PORT_PROD }}
           username: ${{ github.event.inputs.host == 'production-frontend' && secrets.VPS_USERNAME_FRONT || github.event.inputs.host == 'production-backend' && secrets.VPS_USERNAME_BACK || secrets.VPS_USERNAME_INFRA }}
           key: ${{ github.event.inputs.host == 'production-frontend' && secrets.VPS_SSH_KEY_FRONT || github.event.inputs.host == 'production-backend' && secrets.VPS_SSH_KEY_BACK || secrets.VPS_SSH_KEY_INFRA }}
           script: |
